@@ -77,6 +77,22 @@ class Block(BlockHandler):
     rabbit = None
 
     @property
+    def pre_handler_function(self):
+        """
+        function which call before send to handler
+        :return:
+        """
+        return self._pre_handler_function
+
+    @property
+    def post_handler_function(self):
+        """
+        function which call after received from source
+        :return:
+        """
+        return self._post_handler_function
+
+    @property
     def name_block(self):
         """
         Unique name to identify block
@@ -103,18 +119,8 @@ class Block(BlockHandler):
         which be run after got msg from source
 
         """
-        if pre_handler_function is None:
-            pass
-        elif isinstance(pre_handler_function, (types.FunctionType,
-                                               types.MethodType)):
-            self._pre_handler_function = pre_handler_function
-        if post_handler_function is None:
-            pass
-        elif isinstance(post_handler_function, (types.FunctionType,
-                                                types.MethodType)):
-            self._post_handler_function = post_handler_function
-        else:
-            raise TypeError('Incorrect type additional_function, the attribute must be a function')
+        self.pre_handler_function = pre_handler_function
+        self.post_handler_function = post_handler_function
 
     def set_next(self,
                  handler: BlockHandler) -> Optional[BlockHandler, None]:
@@ -135,32 +141,28 @@ class Block(BlockHandler):
         in source have name block from which orchestrator get msg
         :return: None
         """
-        # TODO
         if not message.get_source():
+            # if message don't have source
+            # we start from first chain flow
             self.process(message)
-        # check where the message came from and the current block
-        if message.get_source() == self.name_block:
-            # perform the post processing function for this block, if any
-            if self._post_handler_function:
-                message = self._post_handler_function(message)
+        elif message.get_source() == self.name_block:
+            if self.post_handler_function:
+                # apply post function
+                message = self.post_handler_function(message)
+            if not message:
+                # if not exist message
+                return
+            if not self._next_handler:
+                # last handler in chain
+                return
+            if self._next_handler.pre_handler_function:
+                message = self._next_handler.pre_handler_function(message)
+            if not message:
+                return
+            self._next_handler.process(message)
 
-            # send for execution to the next block
-            if self._next_handler:
-                if not message:
-                    return
-                if self._pre_handler_function:
-                    message = self._pre_handler_function(message)
-                if message is not None:
-                    self.process(message)
-                else:
-                    print('message don\'t send')
-            # no next handler
-            else:
-                pass
-        # looking for the required handler
         elif self._next_handler:
             self._next_handler.handle(message)
-        # passed all flows and did not find the required handler
         else:
             raise FlowException(f'Not found block for source: {message}')
 
@@ -197,3 +199,25 @@ class Block(BlockHandler):
         else:
             next_blocks = 'end'
         return f'{self.name_block} -> {next_blocks}'
+
+    @pre_handler_function.setter
+    def pre_handler_function(self, func: Callable = None):
+        if not func:
+            pass
+        elif isinstance(func, (types.FunctionType,
+                               types.MethodType)):
+            self._pre_handler_function = func
+        else:
+            raise TypeError('Incorrect type pre_handler_function,'
+                            ' the attribute must be a function or None')
+
+    @post_handler_function.setter
+    def post_handler_function(self, func: Callable = None):
+        if not func:
+            pass
+        elif isinstance(func, (types.FunctionType,
+                               types.MethodType)):
+            self._post_handler_function = func
+        else:
+            raise TypeError('Incorrect type post_handler_function,'
+                            ' the attribute must be a function or None')

@@ -1,9 +1,102 @@
 """
-Module with class Flow
+Module with Flow
 """
+# pylint: disable=too-few-public-methods
+from __future__ import annotations
+
+from typing import Union
+
 from orchestrator.message import Message
-from .flow_builder import FlowBuilder
+from .exc import FlowBlockException
+from .exc import FlowBuilderException
 from ..block import Block
+
+
+class FlowBlock:
+    """
+    Block for FlowBuilder
+    """
+    obj_block: Union[Block, type] = None
+
+    def __init__(self,
+                 obj_block,
+                 pre_handler_function=None,
+                 post_handler_function=None):
+        """
+        Init FlowBlock
+        :param obj_block: type stepBlock
+        :param pre_handler_function
+        :param post_handler_function
+        """
+        if isinstance(obj_block, type):
+            if obj_block.__base__.__name__ == 'Block':
+                self.obj_block = obj_block
+
+                self.pre_handler_function = str(pre_handler_function)
+                self.post_handler_function = str(post_handler_function)
+                return
+        elif issubclass(type(obj_block), Block):
+            self.obj_block = obj_block
+
+            self.pre_handler_function = str(pre_handler_function)
+            self.post_handler_function = str(post_handler_function)
+            return
+
+        raise FlowBlockException(f'{obj_block.__base__.__name__}. '
+                                 f'Name incorrect block {obj_block.__name__}')
+
+    def init_block(self, instance_main: Flow) -> Block:
+        """
+        Method init instance subclass MainBlock
+        :param instance_main:
+        :return: object subclass MainBlock
+        """
+        if isinstance(self.obj_block, type):
+            self.obj_block = self.obj_block(
+                pre_handler_function=getattr(instance_main, self.pre_handler_function, None),
+                post_handler_function=getattr(instance_main, self.post_handler_function, None),
+            )
+        else:
+            self.obj_block.pre_handler_function = getattr(instance_main,
+                                                          self.pre_handler_function,
+                                                          None)
+            self.obj_block.post_handler_function = getattr(instance_main,
+                                                           self.post_handler_function,
+                                                           None)
+        return self.obj_block
+
+
+class FlowBuilder:
+    """
+    Flow building class
+    build chain flow from flow blocks
+    """
+
+    def __init__(self,
+                 step: FlowBlock,
+                 *args):
+        """
+        Init FlowBuilder
+        :param FlowBlock step: first block in flow
+        :param List[FlowBlock] args:  other steps  if value exsst
+        """
+        self.steps = list(args)
+        self.steps.insert(0, step)
+        for _index, _step in enumerate(self.steps):
+            if not isinstance(_step, FlowBlock):
+                raise FlowBuilderException(f'on index {_index}')
+
+    def build_flow(self, instance_main: Flow) -> Block:
+        """
+        Byild chain flow for StrategyFlow
+        :param instance_main:
+        :return:
+        """
+        flow = self.steps[0].init_block(instance_main)
+        cur_step = flow
+        for step in self.steps[1:]:
+            cur_step = cur_step.set_next(step.init_block(instance_main))
+        return flow
 
 
 class Flow:
@@ -60,3 +153,10 @@ class Flow:
         :return: None
         """
         self.flow_chain.handle(message)
+
+    def get_steps(self) -> str:
+        """
+        Print steps flow
+        :return:
+        """
+        return self.flow_chain.get_list_flow()
