@@ -118,3 +118,18 @@ class Message:
         if returned_type_str:
             return json.dumps(self.__header)
         return self.__header
+
+    def get_source(self) -> str:
+        """
+
+        :return:
+        """
+        return self.__header.get('source', None)
+
+    def set_source(self, new_source: str) -> None:
+        """
+
+        :param new_source:
+        :return:
+        """
+        self.__header['source'] = new_source
