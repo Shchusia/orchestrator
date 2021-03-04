@@ -10,7 +10,6 @@ class BlockThird(Block):
     third block
     """
     name_block = 'third'
-    name_queue = ''
 
     def process(self, message: Message) -> None:
         """

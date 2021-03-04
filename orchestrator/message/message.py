@@ -42,6 +42,12 @@ class Message:
             raise TypeError("Header msg must be a dict")
         self.__header = header
 
+    def __init__(self, body: dict, header: dict = None):
+        self.body = body
+        if header is None:
+            header = dict()
+        self.header = header
+
     def __str__(self) -> str:
         return f'<Message body: `{self.__body}` header: `{self.__header}`>'
 
@@ -56,7 +62,7 @@ class Message:
         pprint(self.__body)
 
     def update_body(self, date_to_add: Union[Dict, Any],
-                    key: Optional[str]) -> None:
+                    key: Optional[str] = None) -> None:
         """
         Method add value to body
         if a `key` exists, then the date_to_add will be added by this `key`
@@ -78,7 +84,7 @@ class Message:
             raise exc
 
     def update_header(self, date_to_add: Union[Dict, Any],
-                      key: Optional[str]) -> None:
+                      key: Optional[str] = None) -> None:
         """
         Method add value to body
         if a `key` exists, then the date_to_add will be added by this `key`

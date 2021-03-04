@@ -10,7 +10,6 @@ class BlockFirst(Block):
     first block
     """
     name_block = 'first'
-    name_queue = ''
 
     def process(self, message: Message) -> None:
         """

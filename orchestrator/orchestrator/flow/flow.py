@@ -26,24 +26,30 @@ class FlowBlock:
         Init FlowBlock
         :param obj_block: type stepBlock
         :param pre_handler_function
-        :param post_handler_function
+        :param  post_handler_function
         """
-        if isinstance(obj_block, type):
-            if obj_block.__base__.__name__ == 'Block':
+        try:
+            if isinstance(obj_block, type):
+                if getattr(obj_block, '__base__'):
+                    if obj_block.__base__.__name__ == 'Block':
+                        self.obj_block = obj_block
+
+                        self.pre_handler_function = str(pre_handler_function)
+                        self.post_handler_function = str(post_handler_function)
+                        return
+
+            elif issubclass(type(obj_block), Block):
                 self.obj_block = obj_block
 
                 self.pre_handler_function = str(pre_handler_function)
                 self.post_handler_function = str(post_handler_function)
                 return
-        elif issubclass(type(obj_block), Block):
-            self.obj_block = obj_block
 
-            self.pre_handler_function = str(pre_handler_function)
-            self.post_handler_function = str(post_handler_function)
-            return
-
-        raise FlowBlockException(f'{obj_block.__base__.__name__}. '
-                                 f'Name incorrect block {obj_block.__name__}')
+            raise FlowBlockException(type(obj_block))
+        except FlowBlockException as exc:
+            raise exc
+        except Exception as exc :
+            raise TypeError("Incorrect type `obj_block`")
 
     def init_block(self, instance_main: Flow) -> Block:
         """
@@ -51,6 +57,8 @@ class FlowBlock:
         :param instance_main:
         :return: object subclass MainBlock
         """
+        if not isinstance(instance_main, Flow):
+            raise TypeError("Value `instance_main` must be a Flow")
         if isinstance(self.obj_block, type):
             self.obj_block = self.obj_block(
                 pre_handler_function=getattr(instance_main, self.pre_handler_function, None),
@@ -88,7 +96,7 @@ class FlowBuilder:
 
     def build_flow(self, instance_main: Flow) -> Block:
         """
-        Byild chain flow for StrategyFlow
+        Build chain flow for StrategyFlow
         :param instance_main:
         :return:
         """

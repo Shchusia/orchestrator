@@ -11,7 +11,7 @@ class FlowBlockException(Exception):
 
     def __init__(self, message: str = ''):
         self.message = f"Incorrect type block handler. " \
-                       f"The block must inherit from the class 'MainBlock'," \
+                       f"The block must inherit from the class 'Block'," \
                        f" and not : {message}"
         Exception.__init__(self, self.message)
 
