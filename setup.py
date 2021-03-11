@@ -2,12 +2,17 @@
 Setup module for install lib
 """
 import os
+from os import path
 from typing import List
 
 from setuptools import setup
 
-MODULE_NAME = 'orchestrator'
+MODULE_NAME = 'orchestrator_service'
 __version__ = '0.0.1'
+
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 
 def get_packages() -> List[str]:
@@ -22,10 +27,13 @@ def get_packages() -> List[str]:
                                    if x[0].split(os.sep)[-1] not in ignore]
     return list_sub_folders_with_paths
 
+
 setup(name=MODULE_NAME,
       version=__version__,
       description='orchestrator for microservices architecture',
       author='Denis Shchutkiy',
+      long_description=long_description,
+      long_description_content_type='text/markdown',
       author_email='denisshchutskyi@gmail.com',
       url='https://github.com/Shchusia/orchestrator',
       packages=get_packages(),

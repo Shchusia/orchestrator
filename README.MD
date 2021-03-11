@@ -19,7 +19,7 @@ Task | Service execution sequence
 *Task2* | service2 -> service4 -> service1
 *...* | ...
 *TaskN* | service3 -> service2 -> ... -> serviceM
-
+    
 In order to centralized control the permissible sequence of execution of services for different tasks, we offer you an orchestrator.
 
 ![file not found](./materials/solution_application_diagram.png "solution_application_diagram")
