@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 import os
 import warnings
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from .exc import *
 from .to_extends import CommandHandlerPostStrategy, \
@@ -39,30 +39,44 @@ class ServiceBlock(object):
         return self.__post_process
 
     @process.setter
-    def process(self, val: CommandHandlerStrategy):
+    def process(self, val: Union[type, CommandHandlerStrategy]):
         """
         process setter
         """
-        if not isinstance(val, CommandHandlerStrategy):
-            raise ServiceBlockException(
-                f"`process` object must be of type `CommandHandlerStrategy` and not {type(val)}")
-        self.__process = val
+        if isinstance(val, type):
+            if getattr(val, '__base__'):
+                if val.__base__.__name__ == 'CommandHandlerStrategy':
+                    self.__process = val()
+                    return
+        elif isinstance(val, CommandHandlerStrategy):
+            self.__process = val
+            return
+        raise ServiceBlockException(
+            f"`process` object must be of type `CommandHandlerStrategy` and not {type(val)}")
 
     @post_process.setter
-    def post_process(self, val: CommandHandlerPostStrategy):
+    def post_process(self, val: Union[type, CommandHandlerPostStrategy] = None):
         """
         post_process setter
         """
-        if val:
-            if not isinstance(val, CommandHandlerPostStrategy):
-                raise ServiceBlockException(
-                    f"`post_process` object must be of type "
-                    f"`CommandHandlerPostStrategy` and not {type(val)}")
+        if val is None:
+            return
+        elif isinstance(val, type):
+            if getattr(val, '__base__'):
+                if val.__base__.__name__ == 'CommandHandlerPostStrategy':
+                    self.__post_process = val()
+                    return
+        elif isinstance(val, CommandHandlerPostStrategy):
             self.__post_process = val
+            return
+
+        raise ServiceBlockException(
+            f"`post_process` object must be of type "
+            f"`CommandHandlerPostStrategy` and not {type(val)}")
 
     def __init__(self,
-                 process: CommandHandlerStrategy,
-                 post_process: CommandHandlerPostStrategy = None
+                 process: Union[type, CommandHandlerStrategy],
+                 post_process: Union[type, CommandHandlerPostStrategy] = None
                  ):
         """
         Init ServiceBlock
@@ -79,8 +93,24 @@ class ServiceBuilder(object):
     """
     _default_post_process = None  # type: CommandHandlerPostStrategy
 
+    @staticmethod
+    def _check_default_pp(default_post_process: Union[type, CommandHandlerPostStrategy] = None
+                          ) -> Optional[CommandHandlerPostStrategy]:
+        if default_post_process is None:
+            return None
+        elif isinstance(default_post_process, type):
+            if getattr(default_post_process, '__base__'):
+                if default_post_process.__base__.__name__ == 'CommandHandlerPostStrategy':
+                    return default_post_process()
+
+        elif isinstance(default_post_process, CommandHandlerPostStrategy):
+            return default_post_process
+        msg = f"`default_post_process` object must be of type `CommandHandlerPostStrategy`" \
+              f" and not {type(default_post_process)}"
+        raise ServiceBlockException(msg)
+
     def __init__(self, *args,
-                 default_post_process: CommandHandlerPostStrategy = None):
+                 default_post_process: Union[type, CommandHandlerPostStrategy] = None):
         """
         Init ServiceBuilder
         :param List[CommandHandlerStrategy] args:  list CommandHandlerStrategy
@@ -89,35 +119,40 @@ class ServiceBuilder(object):
             if not exist handler for concrete ProcessHandler
         :param kwargs: other args for future
         """
-        if default_post_process and not isinstance(default_post_process,
-                                                   CommandHandlerPostStrategy):
-            msg = f"`default_post_process` object must be of type `CommandHandlerPostStrategy`" \
-                  f" and not {type(default_post_process)}"
-            raise ServiceBlockException(msg)
-        self._default_post_process = default_post_process
+
+        self._default_post_process = ServiceBuilder._check_default_pp(default_post_process)
         list_blocks = list()
         for block in args:
-            if isinstance(block, CommandHandlerPostStrategy):
+            try:
+                tmp_pp = ServiceBuilder._check_default_pp(block)
+
                 if not self._default_post_process:
-                    self._default_post_process = block
+                    self._default_post_process = tmp_pp
+                    continue
                 else:
                     raise DoublePostProcessFunctionDeclaredError
-
+            except ServiceBlockException:
+                pass
             if not isinstance(block, ServiceBlock):
                 raise TypeError(f"block must be instance class `ServiceBlock`."
                                 f" Not {type(block)}")
             list_blocks.append(block)
+        if not list_blocks:
+            raise EmptyCommandsException
         self._list_blocks = list_blocks
 
     def build(self,
-              log: logging.Logger) -> Dict[str:Dict[str:object]]:
+              log: logging.Logger = None) -> Dict[str:Dict[str:object]]:
         """
         Method build dict handler
         :param logging.Logger log: log application for set into services
         :return: {'command':{'process': CommandHandlerStrategy,
         'post_process': CommandHandlerPostStrategy}
         """
+        if not log:
+            log = default_logger
         dict_commands = dict()
+
         if self._default_post_process:
             self._default_post_process.set_logger(log)
         for block in self._list_blocks:
@@ -148,9 +183,31 @@ class Service(object):
     _default_command: str = os.getenv('DefaultCommand', 'run')
     _dict_handlers = dict()  # type: Dict[str: CommandHandlerStrategy]
     _is_run_default: bool = True
+    _service_commands: ServiceBuilder = None
+
+    @property
+    def service_commands(self) -> Optional[ServiceBuilder]:
+        """
+        Property _service_commands
+        :return: ServiceBuilder
+        """
+        if not self._service_commands:
+            raise NotImplementedError
+        return self._service_commands
+
+    @service_commands.setter
+    def service_commands(self,
+                         service_builder: ServiceBuilder) -> None:
+        """
+        setter ServiceBuilder
+        :param ServiceBuilder service_builder:
+        :return: None
+        """
+        if not isinstance(service_builder, ServiceBuilder):
+            raise ServiceBuilderException('Incorrect type `service_builder` variable.')
 
     def __init__(self,
-                 service_builder: ServiceBuilder,
+                 service_builder: ServiceBuilder = None,
                  log: logging.Logger = None,
                  command_field: str = 'command',
                  default_command: str = 'run'):
@@ -159,7 +216,12 @@ class Service(object):
         :param ServiceBuilder service_builder: instance builder with handlers command
         :param logging.Logger log: logger
         """
-        if not isinstance(service_builder, ServiceBuilder):
+        if service_builder is None:
+            if not isinstance(self.service_commands, ServiceBuilder):
+                raise ServiceBuilderException('Incorrect type `service_commands` must be '
+                                              'overridden in subclass Service.')
+            service_builder = self.service_commands
+        elif not isinstance(service_builder, ServiceBuilder):
             raise ServiceBuilderException('Incorrect type `service_builder` variable.')
         if log:
             self.logger = log
@@ -170,6 +232,10 @@ class Service(object):
         if self._default_command == 'run' and default_command != 'run':
             self._default_command = default_command
         self._dict_handlers = service_builder.build(self.logger)
+        if self._default_command not in self._dict_handlers:
+            if len(self._dict_handlers) > 1:
+                raise IncorrectDefaultCommand(self._default_command,
+                                              list(self._dict_handlers.keys()))
 
     def handle(self,
                msg: Message) -> Optional[Message]:

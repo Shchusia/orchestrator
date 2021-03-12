@@ -1,7 +1,7 @@
 """
 Service exceptions
 """
-# pylint: disable=unnecessary-pass
+# pylint: disable=unnecessary-pass,non-parent-init-called
 
 
 class ServiceException(Exception):
@@ -45,4 +45,23 @@ class DoublePostProcessFunctionDeclaredError(ServiceException):
 
     def __init__(self):
         self.message = "Several postprocessors specified"
+        Exception.__init__(self, self.message)
+
+
+class IncorrectDefaultCommand(ServiceException):
+    """
+    among the available commands, there is no default command
+    """
+    def __init__(self, command:str , list_command: list ):
+        self.message = f"The `{command}` command which is the default " \
+                       f"command is not among the valid commands : {str(list_command)}"
+        Exception.__init__(self, self.message)
+
+
+class EmptyCommandsException(ServiceException):
+    """
+    Empty list of commands for service operation
+    """
+    def __init__(self, ):
+        self.message = "Empty list of commands for service operation"
         Exception.__init__(self, self.message)
