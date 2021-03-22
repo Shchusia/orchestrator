@@ -49,6 +49,16 @@ class CommandHandlerStrategy(CommandHandler, ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    async def aprocess(self, msg: Message) -> Message:
+        """
+        the main async method for executing the logic of this handler,
+        must be overridden in the inheritor
+        :param MessageQueue msg: msg from queue
+        :return: MessageQueue or None if return None post handler will not be called
+        """
+        raise NotImplementedError
+
 
 class CommandHandlerPostStrategy(CommandHandler, ABC):
     """
@@ -57,6 +67,17 @@ class CommandHandlerPostStrategy(CommandHandler, ABC):
 
     @abstractmethod
     def post_process(self, msg: Message) -> None:
+        """
+        method does post processing
+        e.g. sending to another queue
+        , must be overridden in the inheritor
+        :param MessageQueue msg:
+        :return: None
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def apost_process(self, msg: Message) -> None:
         """
         method does post processing
         e.g. sending to another queue
