@@ -3,8 +3,7 @@
 ### Installation
 
 ```commandline
-git clone https://github.com/Shchusia/orchestrator.git
-python setup.py install
+pip install orchestrator-service
 ```
 
 ### Problem
