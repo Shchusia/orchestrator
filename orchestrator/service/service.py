@@ -157,6 +157,7 @@ class ServiceBuilder(object):
 
         if self._default_post_process:
             self._default_post_process.set_logger(log)
+            self._default_post_process.set_service_instance(instance=service_instance)
         for block in self._list_blocks:
             process = block.process
             post_process = block.post_process
@@ -164,9 +165,10 @@ class ServiceBuilder(object):
             process.set_service_instance(instance=service_instance)
             if post_process:
                 post_process.set_logger(log)
+                post_process.set_service_instance(instance=service_instance)
+
             else:
                 post_process = self._default_post_process
-            post_process.set_service_instance(instance=service_instance)
 
             if not dict_commands.get(process.target_command):
                 dict_commands[process.target_command] = {
@@ -189,6 +191,7 @@ class Service(object):
     _dict_handlers = dict()  # type: Dict[str: CommandHandlerStrategy]
     _is_run_default: bool = False
     _service_commands: ServiceBuilder = None
+    is_catch_exceptions: bool = False
 
     @property
     def service_commands(self) -> Optional[ServiceBuilder]:
@@ -216,13 +219,16 @@ class Service(object):
                  log: logging.Logger = None,
                  is_run_default: bool = True,
                  command_field: str = 'command',
-                 default_command: str = None
+                 default_command: str = None,
+                 is_catch_exceptions: bool = True,
                  ):
         """
         Init Service
         :param ServiceBuilder service_builder: instance builder with handlers command
         :param logging.Logger log: logger
         """
+        if is_catch_exceptions:
+            self.is_catch_exceptions = True
         if service_builder is None:
             if not isinstance(self.service_commands, ServiceBuilder):
                 raise ServiceBuilderException('Incorrect type `service_commands` must be '
@@ -276,13 +282,15 @@ class Service(object):
             process_handler, post_process_handler = self._get_handlers(msg)
             resp_msg = process_handler.process(msg)
             if post_process_handler and resp_msg:
-                post_process_handler.apost_process(resp_msg)
+                post_process_handler.post_process(resp_msg)
         except CommandHandlerNotFoundException as exc:
             warnings.warn("deprecated", UnknownCommandWarning)
             self.logger.warning(f"Don't process message. Reason:{exc}", exc_info=True)
             return msg
         except Exception as exc:
             self.logger.warning(str(exc), exc_info=True)
+            if not self.is_catch_exceptions:
+                raise exc
             return msg
 
     async def ahandle(self,
@@ -305,4 +313,6 @@ class Service(object):
             return msg
         except Exception as exc:
             self.logger.warning(str(exc), exc_info=True)
+            if not self.is_catch_exceptions:
+                raise exc
             return msg
