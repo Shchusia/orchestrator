@@ -7,9 +7,9 @@ from typing import List
 
 from setuptools import setup
 
-MODULE_NAME = 'orchestrator'
+MODULE_NAME = 'orchestrator_service'
 LIB_NAME = 'orchestrator_service'
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README_PYPI.MD'), encoding='utf-8') as f:

@@ -10,7 +10,7 @@ from orchestrator.exc import EmptyCommandsException
 from orchestrator.exc import NotUniqueCommandError
 from orchestrator.exc import ServiceBlockException
 from orchestrator.service import CommandHandlerPostStrategy, CommandHandlerStrategy
-from orchestrator.service import ServiceBlock, ServiceBuilder
+from orchestrator.service import ServiceBlock, ServiceBuilder, Service
 
 
 class FirstCommand(CommandHandlerStrategy):
@@ -20,6 +20,11 @@ class FirstCommand(CommandHandlerStrategy):
     target_command = 'first_command'
 
     def process(self, message: Message) -> Message:
+        print('process 1')
+        self.set_to_swap_scope('test_val', 1)
+        return message
+
+    async def aprocess(self, message: Message) -> Message:
         print('process 1')
         return message
 
@@ -32,6 +37,15 @@ class SecondCommand(CommandHandlerStrategy):
 
     def process(self, message: Message) -> Message:
         print('process 2')
+        val = self.get_from_swap_scope('test_val')
+        if not val:
+            raise ValueError
+        if val == 1:
+            raise AttributeError("not error just for test")
+        return message
+
+    async def aprocess(self, message: Message) -> Message:
+        print('process 1')
         return message
 
 
@@ -42,6 +56,16 @@ class PPFirstCommand(CommandHandlerPostStrategy):
 
     def post_process(self, msg: Message) -> None:
         print('post_process 1')
+
+    async def apost_process(self, msg: Message) -> None:
+        print('post_process 1')
+
+
+class MyService(Service):
+    service_commands = ServiceBuilder(
+        ServiceBlock(FirstCommand),
+        ServiceBlock(SecondCommand),
+        default_post_process=PPFirstCommand)
 
 
 class TestServiceBlock(TestCase):
@@ -96,3 +120,21 @@ class TestServiceBuilder(TestCase):
         self.assertEqual(pp_fc, ServiceBuilder._check_default_pp(pp_fc))
         self.assertTrue(isinstance(ServiceBuilder._check_default_pp(PPFirstCommand),
                                    PPFirstCommand))
+
+
+class TestService(TestCase):
+
+    def setUp(self) -> None:
+        self.service = MyService(is_catch_exceptions=False)
+        self.msg_first = Message(body={}, header={'command': 'first_command'})
+        self.msg_second = Message(body={}, header={'command': 'second_command'})
+
+    def test_single_scope(self):
+        self.assertRaises(ValueError,
+                          self.service.handle,
+                          self.msg_second)
+
+        self.service.handle(self.msg_first)
+        self.assertRaises(AttributeError,
+                          self.service.handle,
+                          self.msg_second)
