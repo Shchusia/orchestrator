@@ -7,7 +7,7 @@ from typing import List
 
 from setuptools import setup
 
-MODULE_NAME = 'orchestrator'
+MODULE_NAME = 'orchestrator_service'
 LIB_NAME = 'orchestrator_service'
 __version__ = '0.0.3'
 

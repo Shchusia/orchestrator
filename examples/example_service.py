@@ -15,6 +15,8 @@ class FirstCommand(CommandHandlerStrategy):
 
     def process(self, msg: Message) -> Message:
         print('process 1')
+        # set to global scope
+        self.set_to_swap_scope('val', 1)
         return msg
 
 
@@ -26,6 +28,8 @@ class SecondCommand(CommandHandlerStrategy):
 
     def process(self, msg: Message) -> Message:
         print('process 2')
+        # get value from scope
+        print(self.get_from_swap_scope('val'))
         return msg
 
 
