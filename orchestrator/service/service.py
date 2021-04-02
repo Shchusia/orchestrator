@@ -142,10 +142,12 @@ class ServiceBuilder(object):
         self._list_blocks = list_blocks
 
     def build(self,
-              log: logging.Logger = None) -> Dict[str:Dict[str:object]]:
+              log: logging.Logger = None,
+              service_instance: Service = None) -> Dict[str:Dict[str:object]]:
         """
         Method build dict handler
         :param logging.Logger log: log application for set into services
+        :param Service service_instance: service object
         :return: {'command':{'process': CommandHandlerStrategy,
         'post_process': CommandHandlerPostStrategy}
         """
@@ -159,10 +161,13 @@ class ServiceBuilder(object):
             process = block.process
             post_process = block.post_process
             process.set_logger(log)
+            process.set_service_instance(instance=service_instance)
             if post_process:
                 post_process.set_logger(log)
             else:
                 post_process = self._default_post_process
+            post_process.set_service_instance(instance=service_instance)
+
             if not dict_commands.get(process.target_command):
                 dict_commands[process.target_command] = {
                     'process': process,
@@ -237,7 +242,8 @@ class Service(object):
             self._default_command = default_command
         elif self._default_command == 'run' and default_command != 'run':
             self._default_command = default_command
-        self._dict_handlers = service_builder.build(self.logger)
+        self._dict_handlers = service_builder.build(log=self.logger,
+                                                    service_instance=self)
         if self._is_run_default \
                 and self._default_command \
                 and self._default_command not in self._dict_handlers:

@@ -14,6 +14,7 @@ class CommandHandler(ABC):
     Class with method for all handlers
     """
     _logger = None  # for one global handler
+    _service_instance = None  # single scope for service_commands
 
     def set_logger(self,
                    log: logging.Logger) -> None:
@@ -24,6 +25,13 @@ class CommandHandler(ABC):
         """
         if not self._logger:
             self._logger = log
+
+    def set_service_instance(self, instance: "Service") -> None:
+        """
+        Added a single scope for sharing data in the service
+        :param Service instance: service object
+        """
+        self._service_instance = instance
 
 
 class CommandHandlerStrategy(CommandHandler, ABC):
