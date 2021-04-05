@@ -3,8 +3,8 @@
 """
 from unittest import TestCase
 
-from orchestrator import Block
-from orchestrator.message import Message
+from orchestrator_service import Block
+from orchestrator_service.message import Message
 
 
 class FirstBlockForTesting(Block):

@@ -3,10 +3,10 @@
 """
 from unittest import TestCase
 
-from orchestrator import Block
-from orchestrator import Message
-from orchestrator.exc import FlowBlockException,FlowBuilderException
-from orchestrator.orchestrator.flow import FlowBlock, Flow, FlowBuilder
+from orchestrator_service import Block
+from orchestrator_service import Message
+from orchestrator_service.exc import FlowBlockException,FlowBuilderException
+from orchestrator_service.orchestrator.flow import FlowBlock, Flow, FlowBuilder
 
 
 class FirstBlockForTesting(Block):

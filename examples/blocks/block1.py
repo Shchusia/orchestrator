@@ -1,8 +1,8 @@
 """
 Example first block
 """
-from orchestrator import Block
-from orchestrator import Message
+from service_orchestrator import Block
+from service_orchestrator import Message
 
 
 class BlockFirst(Block):

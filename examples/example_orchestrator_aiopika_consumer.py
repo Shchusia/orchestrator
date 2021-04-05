@@ -10,15 +10,15 @@ from aio_pika import IncomingMessage
 
 import examples.blocks as blocks
 import examples.flows as flows
-from orchestrator import Message
-from orchestrator import Orchestrator
+from service_orchestrator import Message
+from service_orchestrator import Orchestrator
 
 logger = Logger(__name__)
 
 
 class MyOrchestrator(Orchestrator):
     """
-    inheriting the base class of the orchestrator to add a queue handling method
+    inheriting the base class of the orchestrator_service to add a queue handling method
     """
 
     async def queue_handler(self, message: IncomingMessage) -> None:

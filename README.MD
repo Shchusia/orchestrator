@@ -3,8 +3,7 @@
 ### Installation
 
 ```commandline
-git clone https://github.com/Shchusia/orchestrator.git
-python setup.py install
+pip install orchestrator-service
 ```
 
 ### Problem
@@ -36,4 +35,12 @@ In order to centralized control the permissible sequence of execution of service
 * add a `flow` to messages (similarly as the source)
 * redefine blocks for the desired type of queue
 
-[more details in examples](./examples/README.MD)
+<u>Bonus:</u>
+* service for build microservice architecture.
+
+<u>Future plans:</u>
+* add async functions to orchestrator
+* add handler for incorrect messages to service
+
+
+[more details in examples](https://github.com/Shchusia/orchestrator/blob/develop/examples)

@@ -7,7 +7,7 @@ import types
 from abc import ABC, abstractmethod
 from typing import Optional, Callable
 
-from orchestrator.message import Message
+from service_orchestrator.message import Message
 from .exc import FlowException
 
 
@@ -128,7 +128,7 @@ class Block(BlockHandler):
         Flow chain management method
         check step by step
         :param MessageQueue message: msg to process
-        in source have name block from which orchestrator get msg
+        in source have name block from which orchestrator_service get msg
         :return: None
         """
         if not message.get_source():

@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 import os
 import warnings
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Tuple
 
 from .exc import *
 from .to_extends import CommandHandlerPostStrategy, \
@@ -142,10 +142,12 @@ class ServiceBuilder(object):
         self._list_blocks = list_blocks
 
     def build(self,
-              log: logging.Logger = None) -> Dict[str:Dict[str:object]]:
+              log: logging.Logger = None,
+              service_instance: Service = None) -> Dict[str:Dict[str:object]]:
         """
         Method build dict handler
         :param logging.Logger log: log application for set into services
+        :param Service service_instance: service object
         :return: {'command':{'process': CommandHandlerStrategy,
         'post_process': CommandHandlerPostStrategy}
         """
@@ -155,14 +157,19 @@ class ServiceBuilder(object):
 
         if self._default_post_process:
             self._default_post_process.set_logger(log)
+            self._default_post_process.set_service_instance(instance=service_instance)
         for block in self._list_blocks:
             process = block.process
             post_process = block.post_process
             process.set_logger(log)
+            process.set_service_instance(instance=service_instance)
             if post_process:
                 post_process.set_logger(log)
+                post_process.set_service_instance(instance=service_instance)
+
             else:
                 post_process = self._default_post_process
+
             if not dict_commands.get(process.target_command):
                 dict_commands[process.target_command] = {
                     'process': process,
@@ -182,8 +189,9 @@ class Service(object):
     _command_field: str = os.getenv('NameCommandInHandler', 'command')
     _default_command: str = os.getenv('DefaultCommand', 'run')
     _dict_handlers = dict()  # type: Dict[str: CommandHandlerStrategy]
-    _is_run_default: bool = True
+    _is_run_default: bool = False
     _service_commands: ServiceBuilder = None
+    is_catch_exceptions: bool = False
 
     @property
     def service_commands(self) -> Optional[ServiceBuilder]:
@@ -209,13 +217,18 @@ class Service(object):
     def __init__(self,
                  service_builder: ServiceBuilder = None,
                  log: logging.Logger = None,
+                 is_run_default: bool = True,
                  command_field: str = 'command',
-                 default_command: str = 'run'):
+                 default_command: str = None,
+                 is_catch_exceptions: bool = True,
+                 ):
         """
         Init Service
         :param ServiceBuilder service_builder: instance builder with handlers command
         :param logging.Logger log: logger
         """
+        if is_catch_exceptions:
+            self.is_catch_exceptions = True
         if service_builder is None:
             if not isinstance(self.service_commands, ServiceBuilder):
                 raise ServiceBuilderException('Incorrect type `service_commands` must be '
@@ -229,13 +242,32 @@ class Service(object):
             self.logger = default_logger
         if self._command_field == 'command' and command_field != 'command':
             self._command_field = command_field
-        if self._default_command == 'run' and default_command != 'run':
+        if is_run_default:
+            self._is_run_default = True
+        if not default_command:
             self._default_command = default_command
-        self._dict_handlers = service_builder.build(self.logger)
-        if self._default_command not in self._dict_handlers:
+        elif self._default_command == 'run' and default_command != 'run':
+            self._default_command = default_command
+        self._dict_handlers = service_builder.build(log=self.logger,
+                                                    service_instance=self)
+        if self._is_run_default \
+                and self._default_command \
+                and self._default_command not in self._dict_handlers:
             if len(self._dict_handlers) > 1:
                 raise IncorrectDefaultCommand(self._default_command,
                                               list(self._dict_handlers.keys()))
+
+    def _get_handlers(self, msg) -> Tuple[CommandHandlerStrategy, CommandHandlerPostStrategy]:
+        command = msg.header.get(self._command_field)
+        handler = self._dict_handlers.get(command)  # get handler without keys
+        if not handler:
+            if len(self._dict_handlers) == 1:
+                handler = self._dict_handlers[list(self._dict_handlers.keys())[0]]
+            elif self._is_run_default and self._default_command:
+                handler = self._dict_handlers.get(self._default_command)
+        if not handler:
+            raise CommandHandlerNotFoundException(command)
+        return handler['process'], handler['post_process']
 
     def handle(self,
                msg: Message) -> Optional[Message]:
@@ -247,21 +279,40 @@ class Service(object):
         :return:
         """
         try:
-            command = msg.header.get(self._command_field)
-            handler = self._dict_handlers.get(command)  # get handler without keys
-            if not handler:
-                if len(self._dict_handlers) == 1:
-                    handler = self._dict_handlers[list(self._dict_handlers.keys())[0]]
-                elif self._is_run_default:
-                    handler = self._dict_handlers.get(self._default_command)
-            if not handler:
-                warnings.warn("deprecated", UnknownCommandWarning)
-                self.logger.warning("don't process message")
-                return msg
-            process_handler, post_process_handler = handler['process'], handler['post_process']
+            process_handler, post_process_handler = self._get_handlers(msg)
             resp_msg = process_handler.process(msg)
-            if post_process_handler:
+            if post_process_handler and resp_msg:
                 post_process_handler.post_process(resp_msg)
+        except CommandHandlerNotFoundException as exc:
+            warnings.warn("deprecated", UnknownCommandWarning)
+            self.logger.warning(f"Don't process message. Reason:{exc}", exc_info=True)
+            return msg
         except Exception as exc:
             self.logger.warning(str(exc), exc_info=True)
+            if not self.is_catch_exceptions:
+                raise exc
+            return msg
+
+    async def ahandle(self,
+                      msg: Message) -> Optional[Message]:
+        """
+        async Method handle msgs from queue for this service
+        if only one handler service run this handler
+        if don't found handler and exist default command
+        :param MessageQueue msg:
+        :return:
+        """
+        try:
+            process_handler, post_process_handler = self._get_handlers(msg)
+            resp_msg = await process_handler.aprocess(msg)
+            if post_process_handler and resp_msg:
+                await post_process_handler.apost_process(resp_msg)
+        except CommandHandlerNotFoundException as exc:
+            warnings.warn("deprecated", UnknownCommandWarning)
+            self.logger.warning(f"Don't process message. Reason:{exc}", exc_info=True)
+            return msg
+        except Exception as exc:
+            self.logger.warning(str(exc), exc_info=True)
+            if not self.is_catch_exceptions:
+                raise exc
             return msg
