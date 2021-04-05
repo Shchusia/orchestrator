@@ -1,7 +1,7 @@
 """
 Second flow example
 """
-from orchestrator import Flow, FlowBlock, FlowBuilder
+from service_orchestrator import Flow, FlowBlock, FlowBuilder
 from ..blocks import *
 
 

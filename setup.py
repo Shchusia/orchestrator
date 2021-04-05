@@ -9,7 +9,7 @@ from setuptools import setup
 
 MODULE_NAME = 'orchestrator_service'
 LIB_NAME = 'orchestrator_service'
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README_PYPI.MD'), encoding='utf-8') as f:
@@ -31,7 +31,7 @@ def get_packages() -> List[str]:
 
 setup(name=LIB_NAME,
       version=__version__,
-      description='orchestrator for microservices architecture',
+      description='orchestrator_service for microservices architecture',
       author='Denis Shchutkiy',
       long_description=long_description,
       long_description_content_type='text/markdown',

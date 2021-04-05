@@ -3,7 +3,7 @@ Test Message
 """
 from unittest import TestCase
 
-from orchestrator.message import Message
+from orchestrator_service.message import Message
 
 
 class TestMessage(TestCase):

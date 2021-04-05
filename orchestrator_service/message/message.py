@@ -1,5 +1,5 @@
 """
-Module with Base class for orchestrator operation
+Module with Base class for orchestrator_service operation
 """
 import json
 from pprint import pprint

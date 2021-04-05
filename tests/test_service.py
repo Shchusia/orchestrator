@@ -4,13 +4,13 @@ Tests for service builder
 # pylint: disable=missing-class-docstring,missing-function-docstring,invalid-name
 from unittest import TestCase
 
-from orchestrator import Message
-from orchestrator.exc import DoublePostProcessFunctionDeclaredError
-from orchestrator.exc import EmptyCommandsException
-from orchestrator.exc import NotUniqueCommandError
-from orchestrator.exc import ServiceBlockException
-from orchestrator.service import CommandHandlerPostStrategy, CommandHandlerStrategy
-from orchestrator.service import ServiceBlock, ServiceBuilder, Service
+from orchestrator_service import Message
+from orchestrator_service.exc import DoublePostProcessFunctionDeclaredError
+from orchestrator_service.exc import EmptyCommandsException
+from orchestrator_service.exc import NotUniqueCommandError
+from orchestrator_service.exc import ServiceBlockException
+from orchestrator_service.service import CommandHandlerPostStrategy, CommandHandlerStrategy
+from orchestrator_service.service import ServiceBlock, ServiceBuilder, Service
 
 
 class FirstCommand(CommandHandlerStrategy):

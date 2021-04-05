@@ -1,5 +1,5 @@
 """
-Import exceptions orchestrator
+Import exceptions orchestrator_service
 """
 # pylint: disable=unused-import,wildcard-import
 from .flow.exc import *
@@ -12,7 +12,7 @@ class UniqueNameException(Exception):
     """
     def __init__(self, not_unique_flow_name: str, _type: str):
         self.message = f'The {_type} name `{not_unique_flow_name}` ' \
-                       f'is not unique to this orchestrator'
+                       f'is not unique to this orchestrator_service'
         Exception.__init__(self, self.message)
 
 
