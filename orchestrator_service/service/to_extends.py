@@ -133,7 +133,7 @@ class CommandHandlerStrategy(CommandHandler, ABC):
         :param MessageQueue msg: msg from queue
         :return: MessageQueue or None if return None post handler will not be called
         """
-        raise NotImplementedError
+        return self.process(msg=msg)
 
 
 class CommandHandlerPostStrategy(CommandHandler, ABC):
@@ -164,4 +164,4 @@ class CommandHandlerPostStrategy(CommandHandler, ABC):
 
         :return: None
         """
-        raise NotImplementedError
+        self.post_process(msg=msg, additional_data=additional_data)
