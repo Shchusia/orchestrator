@@ -2,6 +2,7 @@
 Tests for service builder
 """
 # pylint: disable=missing-class-docstring,missing-function-docstring,invalid-name
+from typing import Optional, Any
 from unittest import TestCase
 
 from orchestrator_service import Message
@@ -54,10 +55,10 @@ class PPFirstCommand(CommandHandlerPostStrategy):
     Example first post process handler
     """
 
-    def post_process(self, msg: Message) -> None:
+    def post_process(self, msg: Message, additional_data: Optional[Any] = None) -> None:
         print('post_process 1')
 
-    async def apost_process(self, msg: Message) -> None:
+    async def apost_process(self, msg: Message, additional_data: Optional[Any] = None) -> None:
         print('post_process 1')
 
 

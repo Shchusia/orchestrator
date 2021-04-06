@@ -6,7 +6,7 @@ And the implementation in these classes of the service logic.
 import logging
 import logging as log_module
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 from ..message import Message
 
@@ -117,7 +117,7 @@ class CommandHandlerStrategy(CommandHandler, ABC):
 
     @abstractmethod
     def process(self,
-                msg: Message) -> Message:
+                msg: Message) -> Tuple[Message, Optional[Any]]:
         """
         the main method for executing the logic of this handler, must be overridden in the inheritor
         :param MessageQueue msg: msg from queue
@@ -126,7 +126,7 @@ class CommandHandlerStrategy(CommandHandler, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def aprocess(self, msg: Message) -> Message:
+    async def aprocess(self, msg: Message) -> Tuple[Message, Optional[Any]]:
         """
         the main async method for executing the logic of this handler,
         must be overridden in the inheritor
@@ -142,23 +142,26 @@ class CommandHandlerPostStrategy(CommandHandler, ABC):
     """
 
     @abstractmethod
-    def post_process(self, msg: Message) -> None:
+    def post_process(self, msg: Message, additional_data: Optional[Any] = None) -> None:
         """
         method does post processing
         e.g. sending to another queue
         , must be overridden in the inheritor
         :param MessageQueue msg:
+        :param additional_data: optional data got from processing block
         :return: None
         """
         raise NotImplementedError
 
     @abstractmethod
-    async def apost_process(self, msg: Message) -> None:
+    async def apost_process(self, msg: Message, additional_data: Optional[Any] = None) -> None:
         """
         method does post processing
         e.g. sending to another queue
         , must be overridden in the inheritor
         :param MessageQueue msg:
+        :param additional_data: optional data got from processing block
+
         :return: None
         """
         raise NotImplementedError

@@ -280,9 +280,16 @@ class Service(object):
         """
         try:
             process_handler, post_process_handler = self._get_handlers(msg)
-            resp_msg = process_handler.process(msg)
+            resp_process = process_handler.process(msg)
+            try:
+                resp_msg, additional_data = resp_process
+            except TypeError:
+                resp_msg, additional_data = resp_process, None
+            print(resp_msg)
+            print(additional_data)
             if post_process_handler and resp_msg:
-                post_process_handler.post_process(resp_msg)
+                post_process_handler.post_process(resp_msg,
+                                                  additional_data=additional_data)
         except CommandHandlerNotFoundException as exc:
             warnings.warn("deprecated", UnknownCommandWarning)
             self.logger.warning(f"Don't process message. Reason:{exc}", exc_info=True)
@@ -304,9 +311,14 @@ class Service(object):
         """
         try:
             process_handler, post_process_handler = self._get_handlers(msg)
-            resp_msg = await process_handler.aprocess(msg)
+            resp_process = await process_handler.aprocess(msg)
+            try:
+                resp_msg, additional_data = resp_process
+            except TypeError:
+                resp_msg, additional_data = resp_process, None
             if post_process_handler and resp_msg:
-                await post_process_handler.apost_process(resp_msg)
+                await post_process_handler.apost_process(resp_msg,
+                                                         additional_data=additional_data)
         except CommandHandlerNotFoundException as exc:
             warnings.warn("deprecated", UnknownCommandWarning)
             self.logger.warning(f"Don't process message. Reason:{exc}", exc_info=True)
