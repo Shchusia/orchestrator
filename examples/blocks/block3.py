@@ -1,8 +1,8 @@
 """
 Example third block
 """
-from service_orchestrator import Block
-from service_orchestrator import Message
+from orchestrator_service import Block
+from orchestrator_service import Message
 
 
 class BlockThird(Block):

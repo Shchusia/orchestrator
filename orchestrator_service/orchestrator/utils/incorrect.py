@@ -6,7 +6,7 @@ incorrect messages and a default solution
 from abc import ABC, abstractmethod
 from typing import Tuple, Any
 
-from service_orchestrator.message import Message
+from orchestrator_service.message import Message
 
 
 class StrategyIncorrectMessages(ABC):

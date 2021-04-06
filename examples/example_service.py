@@ -1,10 +1,10 @@
 """
 Example how setup service
 """
-from service_orchestrator import Message
-from service_orchestrator.service import CommandHandlerPostStrategy
-from service_orchestrator.service import CommandHandlerStrategy
-from service_orchestrator.service import ServiceBlock, ServiceBuilder, Service
+from orchestrator_service import Message
+from orchestrator_service.service import CommandHandlerPostStrategy
+from orchestrator_service.service import CommandHandlerStrategy
+from orchestrator_service.service import ServiceBlock, ServiceBuilder, Service
 
 
 class FirstCommand(CommandHandlerStrategy):

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Union
 
-from service_orchestrator.message import Message
+from orchestrator_service.message import Message
 from .exc import FlowBlockException
 from .exc import FlowBuilderException
 from ..block import Block

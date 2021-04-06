@@ -7,7 +7,7 @@ import types
 from abc import ABC, abstractmethod
 from typing import Optional, Callable
 
-from service_orchestrator.message import Message
+from orchestrator_service.message import Message
 from .exc import FlowException
 
 

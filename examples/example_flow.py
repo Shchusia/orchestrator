@@ -1,9 +1,9 @@
 """
 ExampleFlow
 """
-from service_orchestrator import Block
-from service_orchestrator import Flow, FlowBlock, FlowBuilder
-from service_orchestrator import Message, MessageCustom
+from orchestrator_service import Block
+from orchestrator_service import Flow, FlowBlock, FlowBuilder
+from orchestrator_service import Message, MessageCustom
 
 
 class StepFirst(Block):

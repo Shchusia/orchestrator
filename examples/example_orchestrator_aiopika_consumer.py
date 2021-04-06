@@ -10,8 +10,8 @@ from aio_pika import IncomingMessage
 
 import examples.blocks as blocks
 import examples.flows as flows
-from service_orchestrator import Message
-from service_orchestrator import Orchestrator
+from orchestrator_service import Message
+from orchestrator_service import Orchestrator
 
 logger = Logger(__name__)
 
