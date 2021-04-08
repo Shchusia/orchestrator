@@ -285,8 +285,6 @@ class Service(object):
                 resp_msg, additional_data = resp_process
             except TypeError:
                 resp_msg, additional_data = resp_process, None
-            print(resp_msg)
-            print(additional_data)
             if post_process_handler and resp_msg:
                 post_process_handler.post_process(resp_msg,
                                                   additional_data=additional_data)
@@ -315,7 +313,13 @@ class Service(object):
             try:
                 resp_msg, additional_data = resp_process
             except TypeError:
+                # if one value
                 resp_msg, additional_data = resp_process, None
+            except ValueError:
+                # if more than one
+                resp_msg, *additional_data = resp_process
+                if len(additional_data) == 1:
+                    additional_data = additional_data[0]
             if post_process_handler and resp_msg:
                 await post_process_handler.apost_process(resp_msg,
                                                          additional_data=additional_data)
