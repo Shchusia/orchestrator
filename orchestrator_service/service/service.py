@@ -244,10 +244,10 @@ class Service(object):
             self._command_field = command_field
         if is_run_default:
             self._is_run_default = True
-        if not default_command:
+        if default_command:
             self._default_command = default_command
-        elif self._default_command == 'run' and default_command != 'run':
-            self._default_command = default_command
+        # elif self._default_command == 'run' and default_command != 'run':
+        #     self._default_command = default_command
         self._dict_handlers = service_builder.build(log=self.logger,
                                                     service_instance=self)
         if self._is_run_default \
