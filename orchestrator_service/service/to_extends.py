@@ -10,12 +10,14 @@ from typing import Any, Optional, Tuple
 
 from ..message import Message
 
+DEFAULT_LOGGER = logging.Logger(__name__)
+
 
 class CommandHandler(ABC):
     """
     Class with method for all handlers
     """
-    _logger = None  # for one global handler
+    _logger = DEFAULT_LOGGER  # for one global handler
     _service_instance = None  # single scope for service_commands
 
     @property
@@ -100,6 +102,24 @@ class CommandHandler(ABC):
             if self.logger:
                 self.logger.warning("You cann't use swap because it is not initialized ")
         return data
+
+    def del_from_swap_scope(self,  key: str) -> bool:
+        """
+        Method removes attribute from swap_scope if was exist
+        """
+        is_dropped = False
+        if self._service_instance:
+            try:
+                delattr(self._service_instance, key)
+                is_dropped = True
+            except Exception:
+                if self.logger:
+                    self.logger.warning(f'Key `{key}` not added', exc_info=True)
+        else:
+            if self.logger:
+                self.logger.warning("You cann't use swap because it is not initialized ")
+        return is_dropped
+
 
 
 class CommandHandlerStrategy(CommandHandler, ABC):

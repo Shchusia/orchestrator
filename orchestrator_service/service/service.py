@@ -244,10 +244,10 @@ class Service(object):
             self._command_field = command_field
         if is_run_default:
             self._is_run_default = True
-        if not default_command:
+        if default_command:
             self._default_command = default_command
-        elif self._default_command == 'run' and default_command != 'run':
-            self._default_command = default_command
+        # elif self._default_command == 'run' and default_command != 'run':
+        #     self._default_command = default_command
         self._dict_handlers = service_builder.build(log=self.logger,
                                                     service_instance=self)
         if self._is_run_default \
@@ -285,8 +285,6 @@ class Service(object):
                 resp_msg, additional_data = resp_process
             except TypeError:
                 resp_msg, additional_data = resp_process, None
-            print(resp_msg)
-            print(additional_data)
             if post_process_handler and resp_msg:
                 post_process_handler.post_process(resp_msg,
                                                   additional_data=additional_data)
@@ -315,7 +313,13 @@ class Service(object):
             try:
                 resp_msg, additional_data = resp_process
             except TypeError:
+                # if one value
                 resp_msg, additional_data = resp_process, None
+            except ValueError:
+                # if more than one
+                resp_msg, *additional_data = resp_process
+                if len(additional_data) == 1:
+                    additional_data = additional_data[0]
             if post_process_handler and resp_msg:
                 await post_process_handler.apost_process(resp_msg,
                                                          additional_data=additional_data)
