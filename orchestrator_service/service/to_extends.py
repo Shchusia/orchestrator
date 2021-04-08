@@ -101,6 +101,21 @@ class CommandHandler(ABC):
                 self.logger.warning("You cann't use swap because it is not initialized ")
         return data
 
+    def del_from_swap_scope(self,  key: str) -> bool:
+        is_dropped = False
+        if self._service_instance:
+            try:
+                delattr(self._service_instance, key)
+                is_dropped = True
+            except Exception:
+                if self.logger:
+                    self.logger.warning(f'Key `{key}` not added', exc_info=True)
+        else:
+            if self.logger:
+                self.logger.warning("You cann't use swap because it is not initialized ")
+        return is_dropped
+
+
 
 class CommandHandlerStrategy(CommandHandler, ABC):
     """
