@@ -1,6 +1,8 @@
 """
 Example how setup service
 """
+from typing import Optional, Any
+
 from orchestrator_service import Message
 from orchestrator_service.service import CommandHandlerPostStrategy
 from orchestrator_service.service import CommandHandlerStrategy
@@ -40,7 +42,12 @@ class ThirdCommand(CommandHandlerStrategy):
     target_command = 'third_command'
 
     def process(self, msg: Message) -> Message:
-        print('process 3')
+        # example call another command in current
+
+        command = self.get_service_command(SecondCommand.target_command,  # type: CommandHandlerStrategy
+                                           is_process=True)
+        msg = command.process(msg)
+
         return msg
 
 
@@ -49,7 +56,7 @@ class PPFirstCommand(CommandHandlerPostStrategy):
     Example first post process handler
     """
 
-    def post_process(self, msg: Message) -> None:
+    def post_process(self, msg: Message, additional_data: Optional[Any] = None) -> None:
         print('post_process 1')
 
 
@@ -58,7 +65,7 @@ class PPSecondCommand(CommandHandlerPostStrategy):
     Example second post process handler
     """
 
-    def post_process(self, msg: Message) -> None:
+    def post_process(self, msg: Message, additional_data: Optional[Any] = None) -> None:
         print('post_process 2')
 
 

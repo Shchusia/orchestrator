@@ -3,6 +3,8 @@ Module with classes for inheritance.
 And the implementation in these classes of the service logic.
 """
 # pylint: disable=too-few-public-methods
+from __future__ import annotations
+
 import logging
 import logging as log_module
 from abc import ABC, abstractmethod
@@ -19,6 +21,7 @@ class CommandHandler(ABC):
     """
     _logger = DEFAULT_LOGGER  # for one global handler
     _service_instance = None  # single scope for service_commands
+    _is_logged = False
 
     @property
     def logger(self) -> Optional["logger"]:
@@ -63,6 +66,28 @@ class CommandHandler(ABC):
         """
         self._service_instance = instance
 
+    def get_service_command(self,
+                            command_name: str,
+                            is_process: bool = True) -> Optional[CommandHandler]:
+        """
+        The method allows you to take command handlers by its `target_command`
+        process or post_process handler
+        :param str command_name: `target_command` which handler want to get
+        :param bool is_process: want to get the process handler or post_process(if var is False)
+        :return: if exists then the handler will return None else
+        """
+        handler = None
+        if self._service_instance and self._service_instance._dict_handlers.get(command_name):
+            handler = self._service_instance._dict_handlers[command_name]
+            if is_process:
+                handler = handler['process']
+            else:
+                handler = handler['post_process']
+        else:
+            if self.logger:
+                self.logger.warning("You can't use swap because it is not initialized ")
+        return handler
+
     def set_to_swap_scope(self,
                           key: str,
                           data: Any) -> bool:
@@ -82,7 +107,7 @@ class CommandHandler(ABC):
                     self.logger.warning(f'Key `{key}` not added', exc_info=True)
         else:
             if self.logger:
-                self.logger.warning("You cann't use swap because it is not initialized ")
+                self.logger.warning("You can't use swap because it is not initialized ")
         return is_added
 
     def get_from_swap_scope(self, key: str) -> Optional[Any]:
@@ -103,7 +128,7 @@ class CommandHandler(ABC):
                 self.logger.warning("You cann't use swap because it is not initialized ")
         return data
 
-    def del_from_swap_scope(self,  key: str) -> bool:
+    def del_from_swap_scope(self, key: str) -> bool:
         """
         Method removes attribute from swap_scope if was exist
         """
@@ -117,9 +142,8 @@ class CommandHandler(ABC):
                     self.logger.warning(f'Key `{key}` not added', exc_info=True)
         else:
             if self.logger:
-                self.logger.warning("You cann't use swap because it is not initialized ")
+                self.logger.warning("You can't use swap because it is not initialized ")
         return is_dropped
-
 
 
 class CommandHandlerStrategy(CommandHandler, ABC):

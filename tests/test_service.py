@@ -23,6 +23,7 @@ class FirstCommand(CommandHandlerStrategy):
     def process(self, message: Message) -> Message:
         print('process 1')
         self.set_to_swap_scope('test_val', 1)
+
         return message
 
     async def aprocess(self, message: Message) -> Message:
@@ -46,7 +47,41 @@ class SecondCommand(CommandHandlerStrategy):
         return message
 
     async def aprocess(self, message: Message) -> Message:
-        print('process 1')
+        print('process 2')
+        return message
+
+
+class ThirdCommand(CommandHandlerStrategy):
+    """
+    Example third command
+    """
+    target_command = 'third_command'
+
+    def process(self, message: Message) -> Message:
+        print('process 3')
+        command = self.get_service_command(self.target_command)
+        assert command == self
+        return message
+
+    async def aprocess(self, message: Message) -> Message:
+        print('process 3')
+        return message
+
+
+class FourthCommand(CommandHandlerStrategy):
+    """
+    Example third command
+    """
+    target_command = 'fourth_command'
+
+    def process(self, message: Message) -> Message:
+        print('process 4')
+        command = self.get_service_command(self.target_command)
+        assert command == 'other object'
+        return message
+
+    async def aprocess(self, message: Message) -> Message:
+        print('process 4')
         return message
 
 
@@ -63,9 +98,12 @@ class PPFirstCommand(CommandHandlerPostStrategy):
 
 
 class MyService(Service):
+    _default_command = FirstCommand.target_command
     service_commands = ServiceBuilder(
         ServiceBlock(FirstCommand),
         ServiceBlock(SecondCommand),
+        ServiceBlock(ThirdCommand),
+        ServiceBlock(FourthCommand),
         default_post_process=PPFirstCommand)
 
 
@@ -127,8 +165,10 @@ class TestService(TestCase):
 
     def setUp(self) -> None:
         self.service = MyService(is_catch_exceptions=False)
-        self.msg_first = Message(body={}, header={'command': 'first_command'})
-        self.msg_second = Message(body={}, header={'command': 'second_command'})
+        self.msg_first = Message(body={}, header={'command': FirstCommand.target_command})
+        self.msg_second = Message(body={}, header={'command': SecondCommand.target_command})
+        self.msg_third = Message(body={}, header={'command': ThirdCommand.target_command})
+        self.msg_fourth = Message(body={}, header={'command': FourthCommand.target_command})
 
     def test_single_scope(self):
         self.assertRaises(ValueError,
@@ -139,3 +179,10 @@ class TestService(TestCase):
         self.assertRaises(AttributeError,
                           self.service.handle,
                           self.msg_second)
+
+    def test_get_service_command(self):
+        self.service.handle(self.msg_third)
+
+        self.assertRaises(AssertionError,
+                          self.service.handle,
+                          self.msg_fourth)
