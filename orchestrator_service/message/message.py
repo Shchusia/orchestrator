@@ -61,47 +61,47 @@ class Message:
         print("Body")
         pprint(self.__body)
 
-    def update_body(self, date_to_add: Union[Dict, Any],
+    def update_body(self, data_to_add: Union[Dict, Any],
                     key: Optional[str] = None) -> None:
         """
         Method add value to body
-        if a `key` exists, then the date_to_add will be added by this `key`
-        if the key doesn't exist then date_to_add must be a dictionary
+        if a `key` exists, then the data_to_add will be added by this `key`
+        if the key doesn't exist then data_to_add must be a dictionary
          and the current __body will be updated
-        :param date_to_add:
+        :param data_to_add:
         :param str key:
         :return: None
         """
         try:
             if key is None:
-                if isinstance(date_to_add, dict):
-                    self.__body.update(date_to_add)
+                if isinstance(data_to_add, dict):
+                    self.__body.update(data_to_add)
                 else:
-                    raise TypeError("date_to_add must be a dictionary if no key is specified")
+                    raise TypeError("data_to_add must be a dictionary if no key is specified")
             else:
-                self.__body[key] = date_to_add
+                self.__body[key] = data_to_add
         except Exception as exc:
             raise exc
 
-    def update_header(self, date_to_add: Union[Dict, Any],
+    def update_header(self, data_to_add: Union[Dict, Any],
                       key: Optional[str] = None) -> None:
         """
         Method add value to body
-        if a `key` exists, then the date_to_add will be added by this `key`
-        if the key doesn't exist then date_to_add must be a dictionary
+        if a `key` exists, then the data_to_add will be added by this `key`
+        if the key doesn't exist then data_to_add must be a dictionary
          and the current __header will be updated
-        :param date_to_add:
+        :param data_to_add:
         :param key:
         :return: None
         """
         try:
             if key is None:
-                if isinstance(date_to_add, dict):
-                    self.__header.update(date_to_add)
+                if isinstance(data_to_add, dict):
+                    self.__header.update(data_to_add)
                 else:
-                    raise TypeError("date_to_add must be a dictionary if no key is specified")
+                    raise TypeError("data_to_add must be a dictionary if no key is specified")
             else:
-                self.__header[key] = date_to_add
+                self.__header[key] = data_to_add
         except Exception as exc:
             raise exc
 

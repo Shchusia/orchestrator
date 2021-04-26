@@ -84,7 +84,7 @@ class CommandHandler(ABC):
             else:
                 handler = handler['post_process']
         else:
-            if self.logger:
+            if self.logger and self._is_logged:
                 self.logger.warning("You can't use swap because it is not initialized ")
         return handler
 
@@ -103,10 +103,10 @@ class CommandHandler(ABC):
                 setattr(self._service_instance, key, data)
                 is_added = True
             except Exception:
-                if self.logger:
+                if self.logger and self._is_logged:
                     self.logger.warning(f'Key `{key}` not added', exc_info=True)
         else:
-            if self.logger:
+            if self.logger and self._is_logged:
                 self.logger.warning("You can't use swap because it is not initialized ")
         return is_added
 
@@ -121,10 +121,10 @@ class CommandHandler(ABC):
             try:
                 data = getattr(self._service_instance, key)
             except Exception:
-                if self.logger:
+                if self.logger and self._is_logged:
                     self.logger.warning('Error while fetching data from swap', exc_info=True)
         else:
-            if self.logger:
+            if self.logger and self._is_logged:
                 self.logger.warning("You cann't use swap because it is not initialized ")
         return data
 
@@ -138,10 +138,10 @@ class CommandHandler(ABC):
                 delattr(self._service_instance, key)
                 is_dropped = True
             except Exception:
-                if self.logger:
+                if self.logger and self._is_logged:
                     self.logger.warning(f'Key `{key}` not added', exc_info=True)
         else:
-            if self.logger:
+            if self.logger and self._is_logged:
                 self.logger.warning("You can't use swap because it is not initialized ")
         return is_dropped
 

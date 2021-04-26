@@ -9,14 +9,14 @@ from setuptools import setup
 
 MODULE_NAME = 'orchestrator_service'
 LIB_NAME = 'orchestrator_service'
-__version__ = '0.0.10'
+__version__ = '0.0.11'
 
 this_directory = path.abspath(path.dirname(__file__))
 try:
     with open(path.join(this_directory, 'README_PYPI.MD'), encoding='utf-8') as f:
-        long_description = f.read()
+        LONG_DESCRIPTION = f.read()
 except FileNotFoundError:
-    long_description = 'orchestrator_service for microservices architecture'
+    LONG_DESCRIPTION = 'orchestrator_service for microservices architecture'
 
 
 def get_packages() -> List[str]:
@@ -36,7 +36,7 @@ setup(name=LIB_NAME,
       version=__version__,
       description='orchestrator_service for microservices architecture',
       author='Denis Shchutkiy',
-      long_description=long_description,
+      long_description=LONG_DESCRIPTION,
       long_description_content_type='text/markdown',
       author_email='denisshchutskyi@gmail.com',
       url='https://github.com/Shchusia/orchestrator',
