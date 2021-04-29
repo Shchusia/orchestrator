@@ -38,7 +38,28 @@ class BlockHandler(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def ahandle(self,
+               message: Message) -> Optional[Exception]:
+        """
+        flow chain management method
+        :param MessageQueue message:
+        :return: None
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def process(self,
+                message: Message) -> None:
+        """
+        method for executing the logic of a given block
+        in it, only send messages to other services
+        :param MessageQueue message: msg to process
+        :return: None
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def aprocess(self,
                 message: Message) -> None:
         """
         method for executing the logic of a given block
@@ -156,6 +177,40 @@ class Block(BlockHandler):
         else:
             raise FlowException(f'Not found block for source: {message}')
 
+    async def ahandle(self,
+                      message: Message) -> None:
+        """
+        Flow chain management method
+        check step by step
+        :param MessageQueue message: msg to process
+        in source have name block from which orchestrator_service get msg
+        :return: None
+        """
+        if not message.get_source():
+            # if message don't have source
+            # we start from first chain flow
+            await self.aprocess(message)
+        elif message.get_source() == self.name_block:
+            if self.post_handler_function:
+                # apply post function
+                message = self.post_handler_function(message)
+            if not message:
+                # if not exist message
+                return
+            if not self._next_handler:
+                # last handler in chain
+                return
+            if self._next_handler.pre_handler_function:
+                message = self._next_handler.pre_handler_function(message)
+            if not message:
+                return
+            await self._next_handler.aprocess(message)
+
+        elif self._next_handler:
+            await self._next_handler.ahandle(message)
+        else:
+            raise FlowException(f'Not found block for source: {message}')
+
     def process(self, message: Message):
         """
         Method for executing the logic of a given block
@@ -163,7 +218,16 @@ class Block(BlockHandler):
         :param message:
         :return:
         """
-        raise NotImplementedError
+        raise NotImplementedError('Not Implemented method for processing messages')
+
+    async def aprocess(self, message: Message):
+        """
+        Method for executing the logic of a given block
+        in it, only send messages to other services
+        :param message:
+        :return:
+        """
+        raise NotImplementedError('Not Implemented method for async processing messages')
 
     def get_list_flow(self) -> str:
         """

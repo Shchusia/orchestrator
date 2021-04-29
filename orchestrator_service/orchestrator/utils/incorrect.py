@@ -60,7 +60,21 @@ class IgnoreIncorrectMessage(StrategyIncorrectMessages):
         """
         return True, ''
 
+    async def amessage_checker(self, message: Message) -> Tuple[bool, Any]:
+        """
+        consider all messages correct
+        :param Message message: message to check
+        :return:
+        """
+        return True, ''
+
     def process_incorrect_message(self, message: Message) -> None:
+        """
+        :return: None
+        """
+        return
+
+    async def aprocess_incorrect_message(self, message: Message) -> None:
         """
         :return: None
         """

@@ -141,8 +141,9 @@ class Orchestrator:
         :return: message if don't have information for processing or incorrect
         """
         self._logger.debug(str(message))
-        is_correct, message = self._incorrect_messages_handler.message_checker(message)
+        is_correct, _message = self._incorrect_messages_handler.message_checker(message)
         if not is_correct:
+            self._logger.warning('incorrect message: %s', _message)
             self._incorrect_messages_handler.process_incorrect_message(message)
             if not self._incorrect_messages_handler.is_process_incorrect_messages:
                 return message
@@ -164,6 +165,44 @@ class Orchestrator:
                     target = target()
                     self._targets[msg_header[self._block_field]] = target
                 target.process(message=message)
+            else:
+                self._logger.error(f'No blocks `{msg_header[self._block_field]}` for processing')
+                return message
+        else:
+            self._logger.error(f"Message don't have information for process {message}")
+            return message
+
+    async def ahandle(self, message: Message) -> Optional[Message]:
+        """
+
+        :param Message message: message to process
+        :return: message if don't have information for processing or incorrect
+        """
+        self._logger.debug(str(message))
+        is_correct, _message = await self._incorrect_messages_handler.amessage_checker(message)
+        if not is_correct:
+            self._logger.warning('incorrect message: %s', _message)
+            await self._incorrect_messages_handler.aprocess_incorrect_message(message)
+            if not self._incorrect_messages_handler.is_process_incorrect_messages:
+                return message
+        msg_header = message.header
+        if self._flow_field in msg_header:
+            flow = self._flows.get(msg_header[self._flow_field])  # type: Flow
+            if flow:
+                if isinstance(flow, type):
+                    flow = flow()
+                    self._flows[msg_header[self._flow_field]] = flow
+                await flow.ato_go_with_the_flow(message=message)
+            else:
+                self._logger.error(f'No flow `{msg_header[self._flow_field]}` for processing')
+                return message
+        elif self._block_field in msg_header:
+            target = self._targets.get(msg_header[self._block_field])  # type: Block
+            if target:
+                if isinstance(target, type):
+                    target = target()
+                    self._targets[msg_header[self._block_field]] = target
+                await target.aprocess(message=message)
             else:
                 self._logger.error(f'No blocks `{msg_header[self._block_field]}` for processing')
                 return message

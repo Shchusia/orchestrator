@@ -33,7 +33,12 @@ class FlowBlock:
                 if getattr(obj_block, '__base__'):
                     if obj_block.__base__.__name__ == 'Block':
                         self.obj_block = obj_block
+                        self.pre_handler_function = str(pre_handler_function)
+                        self.post_handler_function = str(post_handler_function)
+                        return
+                    elif issubclass(obj_block.__base__, Block):
 
+                        self.obj_block = obj_block
                         self.pre_handler_function = str(pre_handler_function)
                         self.post_handler_function = str(post_handler_function)
                         return
@@ -161,6 +166,15 @@ class Flow:
         :return: None
         """
         self.flow_chain.handle(message)
+
+    async def ato_go_with_the_flow(self,
+                            message: Message) -> None:
+        """
+        Method that starts flow execution from the first block
+        :param message:
+        :return: None
+        """
+        await self.flow_chain.ahandle(message)
 
     def get_steps(self) -> str:
         """
