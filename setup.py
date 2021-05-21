@@ -9,7 +9,7 @@ from setuptools import setup
 
 MODULE_NAME = 'orchestrator_service'
 LIB_NAME = 'orchestrator_service'
-__version__ = '0.0.12'
+__version__ = '0.0.13'
 
 this_directory = path.abspath(path.dirname(__file__))
 try:
