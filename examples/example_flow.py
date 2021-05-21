@@ -64,12 +64,13 @@ class ExampleFlow(Flow):
     name_flow = 'example'
     steps_flow = FlowBuilder(
         FlowBlock(StepFirst()),
-        FlowBlock(StepSecond, post_handler_function='add_blocks'),
+        FlowBlock(StepSecond,
+                  post_handler_function='add_blocks'),
         FlowBlock(StepThird),
     )
 
     @staticmethod
-    def add_blocks(message: Message) -> Message:
+    async def add_blocks(message: Message) -> Message:
         """
         Function for example how add process
         :param Message message:
