@@ -3,8 +3,10 @@ Module with base class blocks
 """
 from __future__ import annotations
 
+import asyncio
 import types
 from abc import ABC, abstractmethod
+from inspect import iscoroutinefunction
 from typing import Optional, Callable
 
 from orchestrator_service.message import Message
@@ -16,6 +18,10 @@ class BlockHandler(ABC):
     The Handler interface declares a method for building a chain of handlers.
     It also declares a method to fulfill the request.
     """
+    pre_handler_function = None
+    post_handler_function = None
+    is_async_pre_handler = False
+    is_async_post_handler = False
 
     @abstractmethod
     def set_next(self,
@@ -39,7 +45,7 @@ class BlockHandler(ABC):
 
     @abstractmethod
     async def ahandle(self,
-               message: Message) -> Optional[Exception]:
+                      message: Message) -> Optional[Exception]:
         """
         flow chain management method
         :param MessageQueue message:
@@ -60,7 +66,7 @@ class BlockHandler(ABC):
 
     @abstractmethod
     async def aprocess(self,
-                message: Message) -> None:
+                       message: Message) -> None:
         """
         method for executing the logic of a given block
         in it, only send messages to other services
@@ -159,7 +165,11 @@ class Block(BlockHandler):
         elif message.get_source() == self.name_block:
             if self.post_handler_function:
                 # apply post function
-                message = self.post_handler_function(message)
+                if self.is_async_post_handler:
+                    message = asyncio.get_event_loop() \
+                        .run_until_complete(self.post_handler_function(message))
+                else:
+                    message = self.post_handler_function(message)
             if not message:
                 # if not exist message
                 return
@@ -167,7 +177,11 @@ class Block(BlockHandler):
                 # last handler in chain
                 return
             if self._next_handler.pre_handler_function:
-                message = self._next_handler.pre_handler_function(message)
+                if self._next_handler.is_async_pre_handler:
+                    message = asyncio.get_event_loop() \
+                        .run_until_complete(self._next_handler.pre_handler_function(message))
+                else:
+                    message = self._next_handler.pre_handler_function(message)
             if not message:
                 return
             self._next_handler.process(message)
@@ -193,7 +207,10 @@ class Block(BlockHandler):
         elif message.get_source() == self.name_block:
             if self.post_handler_function:
                 # apply post function
-                message = self.post_handler_function(message)
+                if self.is_async_post_handler:
+                    message = await self.post_handler_function(message)
+                else:
+                    message = self.post_handler_function(message)
             if not message:
                 # if not exist message
                 return
@@ -201,7 +218,10 @@ class Block(BlockHandler):
                 # last handler in chain
                 return
             if self._next_handler.pre_handler_function:
-                message = self._next_handler.pre_handler_function(message)
+                if self._next_handler.is_async_pre_handler:
+                    message = await self._next_handler.pre_handler_function(message)
+                else:
+                    message = self._next_handler.pre_handler_function(message)
             if not message:
                 return
             await self._next_handler.aprocess(message)
@@ -247,6 +267,8 @@ class Block(BlockHandler):
         elif isinstance(func, (types.FunctionType,
                                types.MethodType)):
             self._pre_handler_function = func
+            if iscoroutinefunction(func):
+                self.is_async_pre_handler = True
         else:
             raise TypeError('Incorrect type pre_handler_function,'
                             ' the attribute must be a function or None')
@@ -258,6 +280,8 @@ class Block(BlockHandler):
         elif isinstance(func, (types.FunctionType,
                                types.MethodType)):
             self._post_handler_function = func
+            if iscoroutinefunction(func):
+                self.is_async_post_handler = True
         else:
             raise TypeError('Incorrect type post_handler_function,'
                             ' the attribute must be a function or None')
