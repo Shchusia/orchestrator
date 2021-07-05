@@ -169,7 +169,6 @@ class CommandHandlerStrategy(CommandHandler, ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     async def aprocess(self, msg: Message) -> Tuple[Message, Optional[Any]]:
         """
         the main async method for executing the logic of this handler,
@@ -197,8 +196,9 @@ class CommandHandlerPostStrategy(CommandHandler, ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    async def apost_process(self, msg: Message, additional_data: Optional[Any] = None) -> None:
+    async def apost_process(self,
+                            msg: Message,
+                            additional_data: Optional[Any] = None) -> None:
         """
         method does post processing
         e.g. sending to another queue
