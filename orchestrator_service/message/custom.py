@@ -17,5 +17,4 @@ class MessageCustom(Message):
         """
         if header is None:
             header = dict()
-        self.body = body  # type: dict
-        self.header = header  # type: dict
+        super(Message, self).__init__(body=body, header=header)
